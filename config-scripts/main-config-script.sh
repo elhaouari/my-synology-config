@@ -49,8 +49,8 @@ BAZARR_IP="bazarr"
 HOMARR_IP="homarr"
 
 # Set default auth details
-ADMIN_USER="admin"
-ADMIN_PASS="mediaserver123" # Users should change this
+ADMIN_USER="${DEFAULT_USER}"
+ADMIN_PASS="${DEFAULT_PASSWORD}" # Users should change this
 
 # Generate API keys - write to shared volume for inter-container use
 RADARR_API_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -85,8 +85,8 @@ cat > ${SHARED_DIR}/radarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
-  <Username>admin</Username>
-  <Password>mediaserver123</Password>
+  <Username>${ADMIN_USER}</Username>
+  <Password>${ADMIN_PASS}</Password>
 </Config>
 EOL
 
@@ -101,8 +101,8 @@ cat > ${SHARED_DIR}/sonarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
-  <Username>admin</Username>
-  <Password>mediaserver123</Password>
+  <Username>${ADMIN_USER}</Username>
+  <Password>${ADMIN_PASS}</Password>
 </Config>
 EOL
 
@@ -117,8 +117,8 @@ cat > ${SHARED_DIR}/prowlarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
-  <Username>admin</Username>
-  <Password>mediaserver123</Password>
+  <Username>${ADMIN_USER}</Username>
+  <Password>${ADMIN_PASS}</Password>
 </Config>
 EOL
 
@@ -142,8 +142,8 @@ curl -X POST "http://localhost:7878/api/v3/downloadclient" \
     "configContract": "QBittorrentSettings",
     "host": "qbittorrent",
     "port": 8080,
-    "username": "admin",
-    "password": "mediaserver123",
+    "username": "${ADMIN_USER}",
+    "password": "${ADMIN_PASS}",
     "category": "radarr",
     "enable": true
   }'
@@ -198,8 +198,8 @@ curl -X POST "http://localhost:8989/api/v3/downloadclient" \
     "configContract": "QBittorrentSettings",
     "host": "qbittorrent",
     "port": 8080,
-    "username": "admin",
-    "password": "mediaserver123",
+    "username": "${ADMIN_USER}",
+    "password": "${ADMIN_PASS}",
     "category": "sonarr",
     "enable": true
   }'
@@ -796,7 +796,7 @@ EOL
 
 log "All initialization scripts created"
 log "Configuration complete!"
-log "Please change the default password 'mediaserver123' in all applications."
+log "Please change the default password '${ADMIN_PASS}' in all applications."
 log "Check ${SHARED_DIR}/media_server_access.txt for access information."
 
 # Keep log of completion

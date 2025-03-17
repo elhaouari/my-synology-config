@@ -38,7 +38,7 @@ if [ -z "$SID" ]; then
   
   # Try with the new password
   SID=$(curl -s -i -X POST http://localhost:8080/api/v2/auth/login \
-    --data "username=admin&password=mediaserver123" | grep -oP 'SID=\K[^;]+')
+    --data "username=${DEFAULT_USER}&password=${DEFAULT_PASSWORD}" | grep -oP 'SID=\K[^;]+')
     
   if [ -z "$SID" ]; then
     echo "Failed to log in to qBittorrent. Skipping configuration."
@@ -53,7 +53,7 @@ if [ "$SID" != "" ]; then
   echo "Changing qBittorrent password..."
   curl -s -X POST http://localhost:8080/api/v2/app/setPreferences \
     --cookie "SID=$SID" \
-    --data "json={\"web_ui_password_hash\": \"$(echo -n mediaserver123 | md5sum | awk '{print $1}')\", \"web_ui_password_salt\": \"\"}"
+    --data "json={\"web_ui_password_hash\": \"$(echo -n ${DEFAULT_PASSWORD} | md5sum | awk '{print $1}')\", \"web_ui_password_salt\": \"\"}"
 fi
 
 # Configure download paths

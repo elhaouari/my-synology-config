@@ -221,8 +221,8 @@ cat > /app/data/configs/default.json << EOCFG
       "integration": {
         "type": "qbittorrent",
         "properties": {
-          "username": "admin",
-          "password": "mediaserver123",
+          "username": "${DEFAULT_USER}",
+          "password": "${DEFAULT_PASSWORD}",
           "enabled": true
         }
       },

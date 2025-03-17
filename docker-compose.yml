@@ -1,5 +1,15 @@
 version: '3'
 
+# Global environment variables
+x-environment: &default-environment
+  # Default credentials
+  DEFAULT_USER: admin
+  DEFAULT_PASSWORD: MediaServer123!
+  HOMARR_DEFAULT_EMAIL: admin@example.com
+  TZ: America/New_York
+  PUID: 1000
+  PGID: 1000
+
 # Networks setup for container communication
 networks:
   media_network:
@@ -19,11 +29,11 @@ services:
     ports:
       - "51000:7575"
     environment:
-      - TZ=America/New_York
+      <<: *default-environment
       # Pre-create admin account
-      - HOMARR_DEFAULT_EMAIL=admin@example.com
-      - HOMARR_DEFAULT_USERNAME=admin
-      - HOMARR_DEFAULT_PASSWORD=mediaserver123
+      - HOMARR_DEFAULT_EMAIL=${HOMARR_DEFAULT_EMAIL}
+      - HOMARR_DEFAULT_USERNAME=${DEFAULT_USER}
+      - HOMARR_DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
     networks:
       - media_network
     # Use command instead of entrypoint for custom script
@@ -49,9 +59,7 @@ services:
     ports:
       - "51001:7878"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
     networks:
       - media_network
     # Add entrypoint to run setup script
@@ -77,9 +85,7 @@ services:
     ports:
       - "51002:8989"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
     networks:
       - media_network
     # Add entrypoint to run setup script
@@ -103,9 +109,7 @@ services:
     ports:
       - "51003:9696"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
     networks:
       - media_network
     # Add entrypoint to run setup script
@@ -132,9 +136,7 @@ services:
       - "51051:6881"
       - "51051:6881/udp"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
       - WEBUI_PORT=8080
     networks:
       - media_network
@@ -150,11 +152,18 @@ services:
     ports:
       - "51005:5055"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
     networks:
       - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Overseerr with custom configuration...'
+        if [ -f /shared/overseerr_config.sh ]; then
+          chmod +x /shared/overseerr_config.sh
+          /shared/overseerr_config.sh &
+        fi
+        /init"
 
   # Bazarr - Subtitle management
   bazarr:
@@ -169,9 +178,7 @@ services:
     ports:
       - "51006:6767"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
     networks:
       - media_network
     # Add entrypoint to run setup script
@@ -199,12 +206,10 @@ services:
       - "51009:7359/udp" # Optional discovery service
       - "51010:1900/udp" # Optional DLNA service
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      <<: *default-environment
       # Default credentials
-      - JELLYFIN_USERNAME=admin
-      - JELLYFIN_PASSWORD=mediaserver123
+      - JELLYFIN_USERNAME=${DEFAULT_USER}
+      - JELLYFIN_PASSWORD=${DEFAULT_PASSWORD}
     networks:
       - media_network
 
@@ -216,9 +221,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      <<: *default-environment
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_SCHEDULE=0 0 4 * * * # Update at 4:00 AM
-      - TZ=America/New_York
     networks:
       - media_network
 
@@ -232,11 +237,21 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: >
       bash -c "
-        # Wait for services to be fully running
-        sleep 30
+        # Wait for services to be fully running (longer wait to ensure all services are up)
+        sleep 60
         
-        # Run the configuration script
-        bash /config-scripts/configure-services.sh
+        # Set environment variables for configuration scripts
+        export DEFAULT_USER=${DEFAULT_USER}
+        export DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
+        
+        # Run the main configuration script
+        bash /config-scripts/main-config-script.sh
+        
+        # Run all individual service setup scripts
+        for script in /config-scripts/service-scripts/*.sh; do
+          echo 'Running configuration script: '$script
+          bash $script
+        done
         
         # Keep container running for log access
         tail -f /dev/null
@@ -251,8 +266,7 @@ services:
       - bazarr
       - jellyfin
     environment:
-      - PUID=1000
-      - PGID=1000
+      <<: *default-environment
     networks:
       - media_network
 
