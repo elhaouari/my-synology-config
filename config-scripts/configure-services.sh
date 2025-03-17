@@ -287,6 +287,36 @@ curl -X POST "http://localhost:9696/api/v1/indexer" \
     "supportsSearch": true,
     "tags": []
   }'
+
+# Add YTS indexer
+curl -X POST "http://localhost:9696/api/v1/indexer" \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: $(cat /shared/prowlarr_api.key)" \
+  -d '{
+    "name": "YTS",
+    "implementation": "YTS",
+    "configContract": "YTSSettings",
+    "implementationName": "YTS",
+    "protocol": "torrent",
+    "supportsRss": true,
+    "supportsSearch": true,
+    "tags": []
+  }'
+
+# Add RARBG indexer
+curl -X POST "http://localhost:9696/api/v1/indexer" \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: $(cat /shared/prowlarr_api.key)" \
+  -d '{
+    "name": "The Pirate Bay",
+    "implementation": "TPB",
+    "configContract": "TPBSettings",
+    "implementationName": "The Pirate Bay",
+    "protocol": "torrent",
+    "supportsRss": true,
+    "supportsSearch": true,
+    "tags": []
+  }'
 EOL
 
 # Create Bazarr configuration script
@@ -317,9 +347,6 @@ sonarr:
 EOCFG
 EOL
 
-# Make scripts executable
-chmod +x ${SHARED_DIR}/*.sh
-
 # Create Homarr configuration
 log "Setting up Homarr Dashboard with widgets for all services..."
 
@@ -338,24 +365,8 @@ RADARR_API_KEY=$(cat /shared/radarr_api.key)
 SONARR_API_KEY=$(cat /shared/sonarr_api.key)
 PROWLARR_API_KEY=$(cat /shared/prowlarr_api.key)
 
-# Replace placeholders in the Homarr config with actual API keys
-sed -i "s|{{RADARR_API_KEY}}|${RADARR_API_KEY}|g" /shared/homarr_config/default.json
-sed -i "s|{{SONARR_API_KEY}}|${SONARR_API_KEY}|g" /shared/homarr_config/default.json
-sed -i "s|{{PROWLARR_API_KEY}}|${PROWLARR_API_KEY}|g" /shared/homarr_config/default.json
-
-# Create directories if they don't exist
-mkdir -p /app/data/configs/default
-
-# Copy the config to Homarr's configs directory
-cp /shared/homarr_config/default.json /app/data/configs/default/
-
-echo "Homarr dashboard configured with widgets for all services!"
-EOL
-
-chmod +x ${SHARED_DIR}/homarr_setup.sh
-
 # Create default board configuration with widgets for all services
-cat > ${SHARED_DIR}/homarr_config/default.json << 'EOL'
+cat > /shared/homarr_config/default.json << EOCFG
 {
   "name": "Media Server",
   "icon": "grid-3x3",
@@ -395,7 +406,7 @@ cat > ${SHARED_DIR}/homarr_config/default.json << 'EOL'
       "integration": {
         "type": "radarr",
         "properties": {
-          "apiKey": "{{RADARR_API_KEY}}",
+          "apiKey": "${RADARR_API_KEY}",
           "enabled": true
         }
       },
@@ -432,7 +443,7 @@ cat > ${SHARED_DIR}/homarr_config/default.json << 'EOL'
       "integration": {
         "type": "sonarr",
         "properties": {
-          "apiKey": "{{SONARR_API_KEY}}",
+          "apiKey": "${SONARR_API_KEY}",
           "enabled": true
         }
       },
@@ -543,7 +554,7 @@ cat > ${SHARED_DIR}/homarr_config/default.json << 'EOL'
       "integration": {
         "type": "prowlarr",
         "properties": {
-          "apiKey": "{{PROWLARR_API_KEY}}",
+          "apiKey": "${PROWLARR_API_KEY}",
           "enabled": true
         }
       },
@@ -725,4 +736,62 @@ cat > ${SHARED_DIR}/homarr_config/default.json << 'EOL'
   ],
   "sections": []
 }
+EOCFG
+
+# Create directories if they don't exist
+mkdir -p /app/data/configs/default
+
+# Copy the config to Homarr's configs directory
+cp /shared/homarr_config/default.json /app/data/configs/default/
+
+echo "Homarr dashboard configured with widgets for all services!"
 EOL
+
+chmod +x ${SHARED_DIR}/homarr_setup.sh
+
+# Make scripts executable
+chmod +x ${SHARED_DIR}/*.sh
+
+# Create access information file
+cat > ${SHARED_DIR}/media_server_access.txt << EOL
+Media Server Access Information
+==============================
+
+Services:
+- Homarr Dashboard: http://localhost:51000 (Internal: ${HOMARR_IP}:7575)
+- Radarr (Movies): http://localhost:51001 (Internal: ${RADARR_IP}:7878)
+- Sonarr (TV Shows): http://localhost:51002 (Internal: ${SONARR_IP}:8989)
+- Prowlarr (Indexers): http://localhost:51003 (Internal: ${PROWLARR_IP}:9696)
+- qBittorrent (Downloads): http://localhost:51004 (Internal: ${QBIT_IP}:8080)
+- Jellyfin (Media Server): http://localhost:51007 (Internal: ${JELLYFIN_IP}:8096)
+- Overseerr (Requests): http://localhost:51005 (Internal: ${OVERSEERR_IP}:5055)
+- Bazarr (Subtitles): http://localhost:51006 (Internal: ${BAZARR_IP}:6767)
+
+Default credentials (PLEASE CHANGE):
+- Username: admin
+- Password: mediaserver123
+
+For qBittorrent:
+- Default username: admin
+- Default password: adminadmin (change on first login)
+
+API Keys (stored in /shared directory):
+- Radarr API Key: ${RADARR_API_KEY}
+- Sonarr API Key: ${SONARR_API_KEY}
+- Prowlarr API Key: ${PROWLARR_API_KEY}
+
+Container Communication:
+All containers are on the same Docker network and can communicate with each other
+using their service names as hostnames.
+
+Note: These are initial configurations. You may need to adjust some application-specific
+settings based on your preferences.
+EOL
+
+log "All initialization scripts created"
+log "Configuration complete!"
+log "Please change the default password 'mediaserver123' in all applications."
+log "Check ${SHARED_DIR}/media_server_access.txt for access information."
+
+# Keep log of completion
+echo "Configuration completed at $(date)" > ${SHARED_DIR}/setup_completed.txt
