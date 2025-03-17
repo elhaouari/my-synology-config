@@ -85,6 +85,8 @@ cat > ${SHARED_DIR}/radarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
+  <Username>admin</Username>
+  <Password>mediaserver123</Password>
 </Config>
 EOL
 
@@ -99,6 +101,8 @@ cat > ${SHARED_DIR}/sonarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
+  <Username>admin</Username>
+  <Password>mediaserver123</Password>
 </Config>
 EOL
 
@@ -113,6 +117,8 @@ cat > ${SHARED_DIR}/prowlarr/config.xml << EOL
   <LogLevel>Info</LogLevel>
   <Branch>master</Branch>
   <AuthenticationMethod>Forms</AuthenticationMethod>
+  <Username>admin</Username>
+  <Password>mediaserver123</Password>
 </Config>
 EOL
 
