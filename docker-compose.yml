@@ -1,0 +1,255 @@
+version: '3'
+
+# Networks setup for container communication
+networks:
+  media_network:
+    driver: bridge
+
+services:
+  # Homarr - Dashboard to organize and access all your media apps
+  homarr:
+    container_name: homarr
+    image: ghcr.io/ajnart/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./homarr/configs:/app/data/configs
+      - ./homarr/icons:/app/public/icons
+      - ./homarr/data:/data
+      - ./shared:/shared:ro
+    ports:
+      - "7575:7575"
+    environment:
+      - TZ=America/New_York
+    networks:
+      - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Homarr with custom configuration...'
+        if [ -f /shared/homarr_setup.sh ]; then
+          chmod +x /shared/homarr_setup.sh
+          /shared/homarr_setup.sh &
+        fi
+        /init"
+
+  # Radarr - Movie collection manager
+  radarr:
+    container_name: radarr
+    image: linuxserver/radarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./radarr/config:/config
+      - ./media/movies:/movies
+      - ./downloads:/downloads
+      - ./shared:/shared
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Radarr with custom configuration...'
+        if [ -f /shared/radarr_config.sh ]; then
+          chmod +x /shared/radarr_config.sh
+          /shared/radarr_config.sh &
+        fi
+        /init"
+
+  # Sonarr - TV series collection manager
+  sonarr:
+    container_name: sonarr
+    image: linuxserver/sonarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./sonarr/config:/config
+      - ./media/tv:/tv
+      - ./downloads:/downloads
+      - ./shared:/shared
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Sonarr with custom configuration...'
+        if [ -f /shared/sonarr_config.sh ]; then
+          chmod +x /shared/sonarr_config.sh
+          /shared/sonarr_config.sh &
+        fi
+        /init"
+
+  # Prowlarr - Indexer manager/proxy
+  prowlarr:
+    container_name: prowlarr
+    image: linuxserver/prowlarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./prowlarr/config:/config
+      - ./shared:/shared
+    ports:
+      - "9696:9696"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Prowlarr with custom configuration...'
+        if [ -f /shared/prowlarr_config.sh ]; then
+          chmod +x /shared/prowlarr_config.sh
+          /shared/prowlarr_config.sh &
+        fi
+        /init"
+
+  # qBittorrent - Torrent downloader with predefined config
+  qbittorrent:
+    container_name: qbittorrent
+    image: linuxserver/qbittorrent:latest
+    restart: unless-stopped
+    volumes:
+      - ./qbittorrent/config:/config
+      - ./downloads:/downloads
+      - ./shared:/shared
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - WEBUI_PORT=8080
+    networks:
+      - media_network
+
+  # Overseerr - Request management and discovery
+  overseerr:
+    container_name: overseerr
+    image: linuxserver/overseerr:latest
+    restart: unless-stopped
+    volumes:
+      - ./overseerr/config:/config
+      - ./shared:/shared
+    ports:
+      - "5055:5055"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+
+  # Bazarr - Subtitle management
+  bazarr:
+    container_name: bazarr
+    image: linuxserver/bazarr:latest
+    restart: unless-stopped
+    volumes:
+      - ./bazarr/config:/config
+      - ./media/movies:/movies
+      - ./media/tv:/tv
+      - ./shared:/shared
+    ports:
+      - "6767:6767"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+    # Add entrypoint to run setup script
+    entrypoint: >
+      sh -c "
+        echo 'Starting Bazarr with custom configuration...'
+        if [ -f /shared/bazarr_config.sh ]; then
+          chmod +x /shared/bazarr_config.sh
+          /shared/bazarr_config.sh &
+        fi
+        /init"
+
+  # Jellyfin - Media server
+  jellyfin:
+    container_name: jellyfin
+    image: linuxserver/jellyfin:latest
+    restart: unless-stopped
+    volumes:
+      - ./jellyfin/config:/config
+      - ./media:/data
+      - ./shared:/shared
+    ports:
+      - "8096:8096"
+      - "8920:8920" # Optional HTTPS port
+      - "7359:7359/udp" # Optional discovery service
+      - "1900:1900/udp" # Optional DLNA service
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    networks:
+      - media_network
+
+  # Watchtower - Automatic container updates
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * * # Update at 4:00 AM
+      - TZ=America/New_York
+    networks:
+      - media_network
+
+  # Auto-configure containers after startup
+  configurator:
+    container_name: configurator
+    image: linuxserver/openssh-server:latest
+    volumes:
+      - ./config-scripts:/config-scripts
+      - ./shared:/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "
+        # Wait for services to be fully running
+        sleep 30
+        
+        # Run the configuration script
+        bash /config-scripts/configure-services.sh
+        
+        # Keep container running for log access
+        tail -f /dev/null
+      "
+    depends_on:
+      - homarr
+      - radarr
+      - sonarr
+      - prowlarr
+      - qbittorrent
+      - overseerr
+      - bazarr
+      - jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+    networks:
+      - media_network
+
+volumes:
+  media:
+  downloads:
+  configs:
