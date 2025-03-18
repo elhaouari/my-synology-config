@@ -82,8 +82,8 @@ curl -s -X POST "http://localhost:7878/api/v3/downloadclient" \
     "configContract": "QBittorrentSettings",
     "host": "qbittorrent",
     "port": 8080,
-    "username": "admin",
-    "password": "mediaserver123",
+    "username": "${DEFAULT_USER}",
+    "password": "${DEFAULT_PASSWORD}",
     "category": "radarr",
     "enable": true
   }' || echo "Failed to add qBittorrent download client"

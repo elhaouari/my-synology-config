@@ -31,7 +31,7 @@ mkdir -p /downloads/incomplete
 
 # First, let's log in and get the cookie
 SID=$(curl -s -i -X POST http://localhost:8080/api/v2/auth/login \
-  --data "username=admin&password=adminadmin" | grep -oP 'SID=\K[^;]+')
+  --data "username=${DEFAULT_USER}&password=${DEFAULT_PASSWORD}" | grep -oP 'SID=\K[^;]+')
 
 if [ -z "$SID" ]; then
   echo "Failed to log in to qBittorrent with default credentials, trying new password..."

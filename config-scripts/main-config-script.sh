@@ -522,8 +522,8 @@ cat > /shared/homarr_config/default.json << EOCFG
       "integration": {
         "type": "qbittorrent",
         "properties": {
-          "username": "admin",
-          "password": "mediaserver123",
+          "username": "${DEFAULT_USER}",
+          "password": "${DEFAULT_PASSWORD}",
           "enabled": true
         }
       },
@@ -774,12 +774,12 @@ Services:
 - Bazarr (Subtitles): http://localhost:51006 (Internal: ${BAZARR_IP}:6767)
 
 Default credentials (PLEASE CHANGE):
-- Username: admin
-- Password: mediaserver123
+- Username: ${DEFAULT_USER}
+- Password: ${DEFAULT_PASSWORD}
 
 For qBittorrent:
-- Default username: admin
-- Default password: adminadmin (change on first login)
+- Default username: ${DEFAULT_USER}
+- Default password: ${DEFAULT_PASSWORD} (change on first login)
 
 API Keys (stored in /shared directory):
 - Radarr API Key: ${RADARR_API_KEY}

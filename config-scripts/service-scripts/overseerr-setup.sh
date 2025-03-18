@@ -80,8 +80,8 @@ mkdir -p "$CONFIG_DIR/db"
 sqlite3 "$CONFIG_DIR/db/db.sqlite3" < "$CONFIG_DIR/create_admin.sql"
 
 echo "Overseerr configuration completed with pre-created admin user"
-echo "Username: admin"
-echo "Password: ${DEFAULT_PASSWORD:-MediaServer123!}"
+echo "Username: ${DEFAULT_USER}"
+echo "Password: ${DEFAULT_PASSWORD}"
 echo "You can now log in to Overseerr using these credentials"
 EOL
 
