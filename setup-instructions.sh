@@ -18,7 +18,7 @@ mkdir -p homarr/{configs,icons,data} \
       config-scripts
 
 # Make the script executable
-chmod +x config-scripts/configure-services.sh
+chmod +x config-scripts/main-config-script.sh
 
 # Set proper permissions for Synology
 echo "Setting proper permissions..."
@@ -26,6 +26,9 @@ chmod -R 777 ./shared
 
 # Start the containers
 echo "Starting Docker Compose services..."
+export DEFAULT_USER=admin
+export DEFAULT_PASSWORD=MediaServer123!
+export HOMARR_DEFAULT_EMAIL=admin@example.com
 docker-compose up -d
 
 # Wait for everything to be set up

@@ -1,19 +1,18 @@
 version: '3'
 
+# Networks setup for container communication
+networks:
+  media_network:
+    driver: bridge
+
 # Global environment variables
 x-environment: &default-environment
-  # Default credentials
   DEFAULT_USER: admin
   DEFAULT_PASSWORD: MediaServer123!
   HOMARR_DEFAULT_EMAIL: admin@example.com
   TZ: America/New_York
   PUID: 1000
   PGID: 1000
-
-# Networks setup for container communication
-networks:
-  media_network:
-    driver: bridge
 
 services:
   # Homarr - Dashboard to organize and access all your media apps
@@ -31,9 +30,9 @@ services:
     environment:
       <<: *default-environment
       # Pre-create admin account
-      - HOMARR_DEFAULT_EMAIL=${HOMARR_DEFAULT_EMAIL}
-      - HOMARR_DEFAULT_USERNAME=${DEFAULT_USER}
-      - HOMARR_DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
+      HOMARR_DEFAULT_EMAIL: ${HOMARR_DEFAULT_EMAIL}
+      HOMARR_DEFAULT_USERNAME: ${DEFAULT_USER}
+      HOMARR_DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
     networks:
       - media_network
     # Use command instead of entrypoint for custom script
@@ -137,7 +136,7 @@ services:
       - "51051:6881/udp"
     environment:
       <<: *default-environment
-      - WEBUI_PORT=8080
+      WEBUI_PORT: 8080
     networks:
       - media_network
 
@@ -208,8 +207,8 @@ services:
     environment:
       <<: *default-environment
       # Default credentials
-      - JELLYFIN_USERNAME=${DEFAULT_USER}
-      - JELLYFIN_PASSWORD=${DEFAULT_PASSWORD}
+      JELLYFIN_USERNAME: ${DEFAULT_USER}
+      JELLYFIN_PASSWORD: ${DEFAULT_PASSWORD}
     networks:
       - media_network
 
@@ -222,8 +221,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       <<: *default-environment
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 4 * * * # Update at 4:00 AM
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_SCHEDULE: "0 0 4 * * *" # Update at 4:00 AM
     networks:
       - media_network
 
@@ -239,20 +238,20 @@ services:
       bash -c "
         # Wait for services to be fully running (longer wait to ensure all services are up)
         sleep 60
-        
+      
         # Set environment variables for configuration scripts
         export DEFAULT_USER=${DEFAULT_USER}
         export DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
-        
+      
         # Run the main configuration script
         bash /config-scripts/main-config-script.sh
-        
+      
         # Run all individual service setup scripts
         for script in /config-scripts/service-scripts/*.sh; do
           echo 'Running configuration script: '$script
           bash $script
         done
-        
+      
         # Keep container running for log access
         tail -f /dev/null
       "
@@ -269,8 +268,3 @@ services:
       <<: *default-environment
     networks:
       - media_network
-
-volumes:
-  media:
-  downloads:
-  configs:
